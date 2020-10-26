@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -36,6 +37,8 @@ public class GameController : MonoBehaviour
     [SerializeField]
     private StartCanvasController startCanvasController;
     [SerializeField]
+    private PauseCanvasController pauseCanvasController;
+    [SerializeField]
     private CameraController cameraController;
     [SerializeField]
     private AudioSource damageTakenAudioSource;
@@ -48,9 +51,31 @@ public class GameController : MonoBehaviour
     public bool IsBoostedAlready { get; private set; } = false;
     public static int CurrentBoostSpeedMultiplier { get => currentBoostSpeedMultiplier; set => currentBoostSpeedMultiplier = value; }
 
-    public void Boost()
+    private void Awake()
     {
-        StartCoroutine(BoostCoroutine());
+        PauseCanvasController.gameSoundsAudioSources.Add(boostAudioSource);
+        PauseCanvasController.gameSoundsAudioSources.Add(damageTakenAudioSource);
+    }
+
+    private void Start()
+    {
+        StopTime(true);
+    }
+
+    private void Update()
+    {
+        if (isFirstStart)
+        {
+            if (Input.anyKey) 
+            {
+                StartGame();
+            }
+        }
+
+        if (Input.GetKey(KeyCode.Escape))
+        {
+            Pause();
+        }
     }
 
     public void StartGame()
@@ -73,14 +98,36 @@ public class GameController : MonoBehaviour
         mainCanvasController.SetActive(true);
         startCanvasController.SetActive(false);
         
-        SetPause(false);
+        StopTime(false);
 
         GameStartEvent.Invoke();
     }
+    
+    public void Unpause()
+    {
+        StopTime(false);
+        
+        pauseCanvasController.SetActive(false);
+        mainCanvasController.SetActive(true);
+    }
+    
+    public void Boost()
+    {
+        StartCoroutine(BoostCoroutine());
+    }
 
-    private static void SetPause(bool value)
+
+    private static void StopTime(bool value)
     {
         Time.timeScale = value == true ? 0 : 1;
+    }
+
+    private void Pause()
+    {
+        StopTime(true);
+        
+        pauseCanvasController.SetActive(true);
+        mainCanvasController.SetActive(false);
     }
 
     private void GameOver()
@@ -98,7 +145,7 @@ public class GameController : MonoBehaviour
 
         GameOverEvent.Invoke();
 
-        SetPause(true);
+        StopTime(true);
     }
 
     private IEnumerator BoostCoroutine()
@@ -175,22 +222,6 @@ public class GameController : MonoBehaviour
             startCanvasController.SetTime(timePassed);
 
             yield return new WaitForSeconds(1f);
-        }
-    }
-
-    private void Start()
-    {
-        SetPause(true);
-    }
-
-    private void Update()
-    {
-        if (isFirstStart)
-        {
-            if (Input.anyKey) 
-            {
-                StartGame();
-            }
         }
     }
 }
