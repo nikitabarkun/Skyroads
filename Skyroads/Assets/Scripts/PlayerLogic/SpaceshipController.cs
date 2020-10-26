@@ -44,6 +44,9 @@ public class SpaceshipController : MonoBehaviour
     private void Awake()
     {
         animator = GetComponent<Animator>();
+        
+        PauseCanvasController.gameSoundsAudioSources.Add(idleAudioSource);
+        PauseCanvasController.gameSoundsAudioSources.Add(arrivalAudioSource);
 
         defaultPosition = transform.position;
         leftEdgeX = (defaultPosition.x - movingZoneWidth) / 2f;
